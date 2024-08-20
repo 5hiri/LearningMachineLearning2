@@ -37,14 +37,14 @@ def getDataset(index):
     #drop the categorical index value(cause its all the same)
     dataset = dataset.drop('Index', axis=1)
     #create shifted columns
-    for i in range(1, 101):
+    for i in range(1, 51):
         dataset[f'open_prev_{i}'] = dataset['Open'].shift(i)
         dataset[f'high_prev_{i}'] = dataset['High'].shift(i)
         dataset[f'low_prev_{i}'] = dataset['Low'].shift(i)
         dataset[f'close_prev_{i}'] = dataset['Close'].shift(i)
         dataset[f'adj_close_prev_{i}'] = dataset['Adj Close'].shift(i)
         dataset[f'volume_prev_{i}'] = dataset['Volume'].shift(i)
-    for i in range(1, 21):
+    for i in range(1, 6):
         dataset[f'open_next_{i}'] = dataset['Open'].shift(-i)
         dataset[f'high_next_{i}'] = dataset['High'].shift(-i)
         dataset[f'low_next_{i}'] = dataset['Low'].shift(-i)
@@ -68,7 +68,7 @@ data = pd.read_csv('training_data.csv')
 #Feature selection
 X = data
 y_list = []
-for i in range(1, 21):
+for i in range(1, 6):
     X = X.drop(f'open_next_{i}', axis=1)
     X = X.drop(f'high_next_{i}', axis=1)
     X = X.drop(f'low_next_{i}', axis=1)
@@ -99,28 +99,23 @@ X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
 #Define Model
 #Activation Functions:
-#tanh: Acc = 0.025476548820734024
-#sigmoid: Acc = 0.1429416388273239
-#Elu: Acc = 0.13730040192604065
-#Relu: Acc = 0.13757336139678955
-#selu: acc = 0.03559751436114311
-#leaky_relu: acc = 0.03458438813686371
+#elu: Acc = 0.1458190679550171 <-- with msle
+#relu: Acc = 0.14385531842708588
+#selu: acc = 0.16043293476104736 <-- with msle
+#leaky_relu: acc = 0.1402018517255783
 model = Sequential([
-    Flatten(input_shape=(607, 1)),
-    Dense(256, activation='relu'),
-    Dense(128, activation='relu'),
-    Dense(128, activation='relu'),
-    #Dense(64, activation='selu'),
-    #Dense(64, activation='selu'),
-    #Dense(32, activation='selu'),
-    Dense(120, activation='sigmoid')
+    Flatten(input_shape=(307, 1)),
+    Dense(256, activation='elu'),
+    Dense(128, activation='elu'),
+    Dense(64, activation='elu'),
+    Dense(30, activation='linear')
 ])
 
 #Compile the model
-model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='msle', metrics=['accuracy'])
 
 #Train the model
-history = model.fit(X_train, y_train, batch_size=64, epochs=5000, validation_data=(X_test, y_test))
+history = model.fit(X_train, y_train, batch_size=64, epochs=50, validation_data=(X_test, y_test))
 
 #Evaluate model
 test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
