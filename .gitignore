@@ -1,2 +1,5 @@
 *.csv
 *.txt
+*.png
+*.jpg
+*.h5
