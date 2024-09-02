@@ -5,7 +5,7 @@ import gym, math, time
 env = gym.make("CartPole-v1")
 
 #Reset the env to its initial state
-state = env.reset()
+state, _ = env.reset()
 
 #Example of running one episode
 # done = False
@@ -44,18 +44,23 @@ highest_reward = 0
 #Q-learning algorithm
 for episode in range(episodes):
     t0 = time.time() #set the initial time
-    discrete_state = get_discrete_state(env.reset())
+    discrete_state = get_discrete_state(env.reset()[0])
     done = False
     episode_reward = 0 #reward starts as 0 for each episode
+
+    avg_step_time = 0
+    step_count = 0
 
     if episode % 2000 == 0: 
         print("Episode: " + str(episode))
     while not done:
+        step_count += 1
+        t4 = time.time()
         if np.random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() #Explore: select random action
         else:
             action = np.argmax(Q_table[discrete_state]) #Exploit: select the action with max Q-value
-        next_state, reward, done, _ = env.step(action)
+        next_state, reward, done, _, _ = env.step(action)
         episode_reward += reward #add the reward
         new_discrete_state = get_discrete_state(next_state)
         if episode % 2000 == 0: #render
@@ -69,8 +74,14 @@ for episode in range(episodes):
             new_q = (1 - alpha) * current_q + alpha * (reward + gamma * max_future_q)
 
             Q_table[discrete_state + (action,)] = new_q
-
+        else:
+            t6 = time.time()
+            avg_step_time += t6 - t4
+            print(f'Avg Step Time: {avg_step_time/step_count}')
+        
         discrete_state = new_discrete_state
+        t5 = time.time()
+        avg_step_time += t5 - t4
     
     if epsilon > min_epsilon: #epsilon modification
         if episode_reward > prior_reward:
@@ -104,14 +115,14 @@ for episode in range(episodes):
         print(f'Highest Mean Reward: {highest_reward}')
 
 #Evaluate the trained model
-state = env.reset()
+state, _ = env.reset()
 done = False
-discrete_state = get_discrete_state(env.reset())
+discrete_state = get_discrete_state(env.reset()[0])
 t0 = time.time() #set the initial time
 total_reward = 0
 while not done:
     action = np.argmax(Q_table[discrete_state])
-    next_state, reward, done, _ = env.step(action)
+    next_state, reward, done, _, _ = env.step(action)
     total_reward = total_reward+reward
     env.render()
     discrete_state = get_discrete_state(next_state)
